@@ -1,3 +1,3 @@
 # trash_cash
 
-A new Flutter project.
+A flutter based mobile application 
