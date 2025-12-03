@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import '../theme/app_colors.dart';
 
 class AIScannerScreen extends StatefulWidget {
@@ -8,121 +9,462 @@ class AIScannerScreen extends StatefulWidget {
   State<AIScannerScreen> createState() => _AIScannerScreenState();
 }
 
-class _AIScannerScreenState extends State<AIScannerScreen> {
-  bool _isScanning = false;
+class _AIScannerScreenState extends State<AIScannerScreen>
+    with TickerProviderStateMixin {
+  late AnimationController _scanLineController;
+  late AnimationController _pulseController;
+  bool _isFlashOn = false;
+  bool _isDetecting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scanLineController = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..repeat();
+
+    _pulseController = AnimationController(
+      duration: const Duration(seconds: 1),
+      vsync: this,
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _scanLineController.dispose();
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  void _startDetection() {
+    setState(() {
+      _isDetecting = true;
+    });
+
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const ClassificationResultScreen(),
+          ),
+        );
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.primary,
-      appBar: AppBar(
-        backgroundColor: AppColors.accent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        centerTitle: true,
-        title: const Text(
-          'AI Scanner',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (!_isScanning)
-              Column(
-                children: [
-                  Container(
-                    width: 150,
-                    height: 150,
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          // Camera View Placeholder with Vignette
+          Stack(
+            children: [
+              // Fake camera feed
+              Container(
+                color: Colors.grey[900],
+                child: Center(
+                  child: Container(
+                    width: double.infinity,
+                    height: double.infinity,
                     decoration: BoxDecoration(
-                      color: AppColors.accent,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Icon(
-                      Icons.camera_alt,
-                      size: 80,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  const Text(
-                    'Point your camera at trash',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.text,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _isScanning = true;
-                      });
-                      Future.delayed(const Duration(seconds: 3), () {
-                        if (mounted) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const ClassificationResultScreen(),
-                            ),
-                          );
-                        }
-                      });
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.accent,
-                      minimumSize: const Size(200, 50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      'Start Scanning',
-                      style: TextStyle(fontSize: 16, color: Colors.white),
-                    ),
-                  ),
-                ],
-              )
-            else
-              Column(
-                children: [
-                  Container(
-                    width: 150,
-                    height: 150,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      border: Border.all(color: AppColors.accent, width: 2),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Center(
-                      child: CircularProgressIndicator(
-                        valueColor:
-                            AlwaysStoppedAnimation<Color>(AppColors.accent),
+                      gradient: RadialGradient(
+                        colors: [
+                          Colors.grey[800]!,
+                          Colors.black,
+                        ],
+                        stops: const [0.5, 1.0],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 32),
-                  const Text(
-                    'Scanning...',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.text,
-                    ),
+                ),
+              ),
+
+              // Vignette effect
+              Container(
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withOpacity(0.4),
+                    ],
                   ),
+                ),
+              ),
+
+              // Central Scanning Area
+              Center(
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // Outer ring
+                    Container(
+                      width: 280,
+                      height: 280,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.2),
+                          width: 2,
+                        ),
+                      ),
+                    ),
+
+                    // Scanning lines animation
+                    AnimatedBuilder(
+                      animation: _scanLineController,
+                      builder: (context, child) {
+                        return CustomPaint(
+                          size: const Size(280, 280),
+                          painter: ScanningLinePainter(
+                            progress: _scanLineController.value,
+                          ),
+                        );
+                      },
+                    ),
+
+                    // Green pulsing glow (when detecting)
+                    if (_isDetecting)
+                      ScaleTransition(
+                        scale: Tween<double>(begin: 1.0, end: 1.15)
+                            .animate(_pulseController),
+                        child: Container(
+                          width: 280,
+                          height: 280,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF4CAF50)
+                                    .withOpacity(0.4),
+                                blurRadius: 20,
+                                spreadRadius: 10,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                    // Inner detection ring
+                    Container(
+                      width: 280,
+                      height: 280,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: const Color(0xFF4CAF50),
+                          width: 2,
+                        ),
+                      ),
+                    ),
+
+                    // Corner markers
+                    ..._buildCornerMarkers(),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          // Top Overlay Text
+          Positioned(
+            top: 60,
+            left: 0,
+            right: 0,
+            child: Column(
+              children: [
+                Text(
+                  'Align the item inside the circle',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black.withOpacity(0.5),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Bottom Instructions & Buttons
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.8),
+                    Colors.black.withOpacity(0.4),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 30,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Instructions
+                  Column(
+                    children: [
+                      const Text(
+                        'Point your camera at any waste item.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'AI will identify it in seconds.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white.withOpacity(0.7),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 30),
+
+                  // Action Buttons Row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      // Flash Toggle
+                      _buildIconButton(
+                        icon: _isFlashOn ? Icons.flash_on : Icons.flash_off,
+                        onPressed: () {
+                          setState(() {
+                            _isFlashOn = !_isFlashOn;
+                          });
+                        },
+                      ),
+
+                      // Capture / Auto-detect Button
+                      GestureDetector(
+                        onTap: _startDetection,
+                        child: AnimatedBuilder(
+                          animation: _pulseController,
+                          builder: (context, child) {
+                            return Transform.scale(
+                              scale: 1.0 + (_pulseController.value * 0.1),
+                              child: Container(
+                                width: 70,
+                                height: 70,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: const Color(0xFF4CAF50),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFF4CAF50)
+                                          .withOpacity(0.5),
+                                      blurRadius: 12,
+                                      spreadRadius: 4,
+                                    ),
+                                  ],
+                                ),
+                                child: const Icon(
+                                  Icons.camera_alt,
+                                  color: Colors.white,
+                                  size: 32,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+
+                      // Switch Camera
+                      _buildIconButton(
+                        icon: Icons.flip_camera_android,
+                        onPressed: () {
+                          // Toggle camera
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
                 ],
               ),
-          ],
+            ),
+          ),
+
+          // Back Button
+          Positioned(
+            top: 50,
+            left: 20,
+            child: IconButton(
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(
+                Icons.arrow_back,
+                color: Colors.white,
+                size: 24,
+              ),
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.black.withOpacity(0.3),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _buildCornerMarkers() {
+    const markerSize = 30.0;
+    const markerColor = Color(0xFF4CAF50);
+
+    return [
+      // Top-left
+      Positioned(
+        top: 50,
+        left: 50,
+        child: Container(
+          width: markerSize,
+          height: markerSize,
+          decoration: BoxDecoration(
+            border: Border(
+              top: BorderSide(color: markerColor, width: 3),
+              left: BorderSide(color: markerColor, width: 3),
+            ),
+          ),
+        ),
+      ),
+      // Top-right
+      Positioned(
+        top: 50,
+        right: 50,
+        child: Container(
+          width: markerSize,
+          height: markerSize,
+          decoration: BoxDecoration(
+            border: Border(
+              top: BorderSide(color: markerColor, width: 3),
+              right: BorderSide(color: markerColor, width: 3),
+            ),
+          ),
+        ),
+      ),
+      // Bottom-left
+      Positioned(
+        bottom: 50,
+        left: 50,
+        child: Container(
+          width: markerSize,
+          height: markerSize,
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(color: markerColor, width: 3),
+              left: BorderSide(color: markerColor, width: 3),
+            ),
+          ),
+        ),
+      ),
+      // Bottom-right
+      Positioned(
+        bottom: 50,
+        right: 50,
+        child: Container(
+          width: markerSize,
+          height: markerSize,
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(color: markerColor, width: 3),
+              right: BorderSide(color: markerColor, width: 3),
+            ),
+          ),
+        ),
+      ),
+    ];
+  }
+
+  Widget _buildIconButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white.withOpacity(0.15),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        child: Icon(
+          icon,
+          color: Colors.white,
+          size: 24,
         ),
       ),
     );
   }
+}
+
+class ScanningLinePainter extends CustomPainter {
+  final double progress;
+
+  ScanningLinePainter({required this.progress});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    const radius = 140.0;
+
+    final paint = Paint()
+      ..color = const Color(0xFF4CAF50).withOpacity(0.6)
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+
+    // Horizontal scanning line
+    final lineY = center.dy - radius + (progress * radius * 2);
+    canvas.drawLine(
+      Offset(center.dx - radius, lineY),
+      Offset(center.dx + radius, lineY),
+      paint,
+    );
+
+    // Glow effect
+    final glowPaint = Paint()
+      ..color = const Color(0xFF4CAF50).withOpacity(0.2)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+
+    canvas.drawLine(
+      Offset(center.dx - radius, lineY),
+      Offset(center.dx + radius, lineY),
+      glowPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(ScanningLinePainter oldDelegate) =>
+      oldDelegate.progress != progress;
 }
 
 class ClassificationResultScreen extends StatelessWidget {
@@ -130,19 +472,46 @@ class ClassificationResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final items = [
+      {
+        'name': 'Plastic Bottle',
+        'icon': Icons.water_drop,
+        'badge': 'Recyclable',
+        'badgeColor': const Color(0xFFFF9800),
+        'points': 20,
+      },
+      {
+        'name': 'Paper Cup',
+        'icon': Icons.coffee,
+        'badge': 'Recyclable',
+        'badgeColor': const Color(0xFF8BC34A),
+        'points': 10,
+      },
+      {
+        'name': 'Food Waste',
+        'icon': Icons.lunch_dining,
+        'badge': 'Not Recyclable',
+        'badgeColor': const Color(0xFFF44336),
+        'points': 0,
+      },
+    ];
+
     return Scaffold(
-      backgroundColor: AppColors.primary,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.accent,
+        backgroundColor: AppColors.secondary,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: AppColors.text),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
         title: const Text(
-          'Classification Result',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          'Detection Result',
+          style: TextStyle(
+            color: AppColors.text,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: SingleChildScrollView(
@@ -150,117 +519,173 @@ class ClassificationResultScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              height: 200,
-              decoration: BoxDecoration(
-                color: AppColors.secondary,
-                border: Border.all(color: AppColors.border),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Center(
-                child: Text(
-                  '📷',
-                  style: TextStyle(fontSize: 80),
+            const SizedBox(height: 12),
+
+            // Image Preview
+            Center(
+              child: Container(
+                width: 200,
+                height: 200,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: const Color(0xFF4CAF50).withOpacity(0.3),
+                    width: 2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF4CAF50).withOpacity(0.15),
+                      blurRadius: 12,
+                      spreadRadius: 4,
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.image,
+                  size: 80,
+                  color: Colors.grey,
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+
+            const SizedBox(height: 32),
+
+            // Detected Items Title
             const Text(
-              'Detected Item',
+              'Detected Items',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: AppColors.text,
               ),
             ),
+
             const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.secondary,
-                border: Border.all(color: AppColors.border),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Plastic Bottle',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.text,
-                        ),
+
+            // Items List
+            ...items.map((item) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.secondary,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.border),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
                       ),
-                      Icon(Icons.check_circle, color: AppColors.success),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Status: Recyclable',
-                    style: TextStyle(
-                      color: AppColors.success,
-                      fontWeight: FontWeight.w500,
+                  child: Row(
+                    children: [
+                      // Icon
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          item['icon'] as IconData,
+                          color: AppColors.accent,
+                          size: 24,
+                        ),
+                      ),
+
+                      const SizedBox(width: 16),
+
+                      // Name
+                      Expanded(
+                        child: Text(
+                          item['name'] as String,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.text,
+                          ),
+                        ),
+                      ),
+
+                      // Badge & Points
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: (item['badgeColor'] as Color)
+                                  .withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              item['badge'] as String,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: item['badgeColor'] as Color,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            '+${item['points']} pts',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.accent,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+
+            const SizedBox(height: 32),
+
+            // Request Pickup Button
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PickupRequestFlow(),
                     ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4CAF50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Confidence: 92%',
-                    style: TextStyle(
-                      color: AppColors.textLight,
-                    ),
+                  elevation: 4,
+                ),
+                child: const Text(
+                  'Request Pickup',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Points: 50 pts',
-                    style: TextStyle(
-                      color: AppColors.accent,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const PickupRequestScreen(),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accent,
-                minimumSize: const Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text(
-                'Request Pickup',
-                style: TextStyle(fontSize: 16, color: Colors.white),
-              ),
             ),
-            const SizedBox(height: 12),
-            OutlinedButton(
-              onPressed: () => Navigator.pop(context),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                side: const BorderSide(color: AppColors.accent),
-              ),
-              child: const Text(
-                'Scan Another',
-                style: TextStyle(fontSize: 16, color: AppColors.accent),
-              ),
-            ),
+
+            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -268,220 +693,528 @@ class ClassificationResultScreen extends StatelessWidget {
   }
 }
 
-class PickupRequestScreen extends StatefulWidget {
-  const PickupRequestScreen({super.key});
+class PickupRequestFlow extends StatefulWidget {
+  const PickupRequestFlow({super.key});
 
   @override
-  State<PickupRequestScreen> createState() => _PickupRequestScreenState();
+  State<PickupRequestFlow> createState() => _PickupRequestFlowState();
 }
 
-class _PickupRequestScreenState extends State<PickupRequestScreen> {
-  late TextEditingController _addressController;
-  late TextEditingController _notesController;
+class _PickupRequestFlowState extends State<PickupRequestFlow> {
+  int _currentStep = 0;
+  late TextEditingController _weightController;
 
   @override
   void initState() {
     super.initState();
-    _addressController = TextEditingController();
-    _notesController = TextEditingController();
+    _weightController = TextEditingController(text: '3.5');
   }
 
   @override
   void dispose() {
-    _addressController.dispose();
-    _notesController.dispose();
+    _weightController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.primary,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.accent,
+        backgroundColor: AppColors.secondary,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: AppColors.text),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
-        title: const Text(
-          'Request Pickup',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        title: Text(
+          'Pickup Request - Step ${_currentStep + 1}',
+          style: const TextStyle(
+            color: AppColors.text,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Pickup Details',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppColors.text,
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _addressController,
-              decoration: InputDecoration(
-                hintText: 'Enter your address',
-                filled: true,
-                fillColor: AppColors.secondary,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.border),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.border),
-                ),
-              ),
-              maxLines: 3,
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _notesController,
-              decoration: InputDecoration(
-                hintText: 'Additional notes',
-                filled: true,
-                fillColor: AppColors.secondary,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.border),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.border),
-                ),
-              ),
-              maxLines: 3,
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const PickupStatusScreen(),
+      body: Column(
+        children: [
+          // Progress Indicator
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: List.generate(
+                3,
+                (index) => Expanded(
+                  child: Container(
+                    height: 4,
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    decoration: BoxDecoration(
+                      color: index <= _currentStep
+                          ? const Color(0xFF4CAF50)
+                          : AppColors.border,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accent,
-                minimumSize: const Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text(
-                'Submit Request',
-                style: TextStyle(fontSize: 16, color: Colors.white),
-              ),
             ),
-          ],
-        ),
+          ),
+
+          // Content
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: _buildStepContent(),
+            ),
+          ),
+
+          // Navigation Buttons
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                if (_currentStep > 0)
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          _currentStep--;
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.border,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Back',
+                        style: TextStyle(
+                          color: AppColors.text,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                if (_currentStep > 0) const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      if (_currentStep < 2) {
+                        setState(() {
+                          _currentStep++;
+                        });
+                      } else {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const PickupConfirmationScreen(),
+                          ),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF4CAF50),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      _currentStep == 2 ? 'Confirm' : 'Next',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
-}
 
-class PickupStatusScreen extends StatelessWidget {
-  const PickupStatusScreen({super.key});
+  Widget _buildStepContent() {
+    switch (_currentStep) {
+      case 0:
+        return _buildStep1ConfirmItem();
+      case 1:
+        return _buildStep2PickupTime();
+      case 2:
+        return _buildStep3Summary();
+      default:
+        return Container();
+    }
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.primary,
-      appBar: AppBar(
-        backgroundColor: AppColors.accent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
+  Widget _buildStep1ConfirmItem() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Item Image
+        Center(
+          child: Container(
+            width: 180,
+            height: 180,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(
+              Icons.image,
+              size: 80,
+              color: Colors.grey,
+            ),
+          ),
         ),
-        centerTitle: true,
-        title: const Text(
-          'Pickup Status',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+
+        const SizedBox(height: 32),
+
+        // Item Details Card
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: AppColors.secondary,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildDetailRow('Item Name', 'Plastic Bottle'),
+              const Divider(),
+              _buildDetailRow('Estimated Points', '20 pts', isPoints: true),
+              const Divider(),
+              const Text(
+                'Weight (kg)',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textLight,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _weightController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  hintText: 'Enter weight in kg',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
+      ],
+    );
+  }
+
+  Widget _buildStep2PickupTime() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Pickup within 2 hours',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: AppColors.text,
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // Time slots
+        ...['2:00 PM - 4:00 PM', '4:00 PM - 6:00 PM', '6:00 PM - 8:00 PM']
+            .map((time) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Container(
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: AppColors.secondary,
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: AppColors.border),
-                borderRadius: BorderRadius.circular(16),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Row(
                     children: [
+                      const Icon(
+                        Icons.access_time,
+                        color: const Color(0xFF4CAF50),
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
                       Text(
-                        'Request #001',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                        time,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
                           color: AppColors.text,
                         ),
                       ),
-                      Icon(Icons.pending_actions, color: AppColors.warning),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  const Row(
-                    children: [
-                      Icon(Icons.location_on, color: AppColors.textLight),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          '123 Main St, City',
-                          style: TextStyle(color: AppColors.textLight),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  const Row(
-                    children: [
-                      Icon(Icons.access_time, color: AppColors.textLight),
-                      SizedBox(width: 8),
-                      Text(
-                        'Estimated pickup: 2-4 hours',
-                        style: TextStyle(color: AppColors.textLight),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  LinearProgressIndicator(
-                    value: 0.33,
-                    backgroundColor: AppColors.border,
-                    valueColor:
-                        const AlwaysStoppedAnimation<Color>(AppColors.accent),
-                    minHeight: 8,
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Status: Pending',
-                    style: TextStyle(
-                      color: AppColors.warning,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  Radio(
+                    value: time,
+                    groupValue: null,
+                    onChanged: (_) {},
+                    activeColor: const Color(0xFF4CAF50),
                   ),
                 ],
               ),
             ),
-          ],
+          );
+        }).toList(),
+      ],
+    );
+  }
+
+  Widget _buildStep3Summary() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Truck illustration
+        Center(
+          child: Container(
+            width: 200,
+            height: 150,
+            decoration: BoxDecoration(
+              color: const Color(0xFF4CAF50).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(
+              Icons.local_shipping,
+              size: 80,
+              color: Color(0xFF4CAF50),
+            ),
+          ),
         ),
+
+        const SizedBox(height: 32),
+
+        // Details
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: AppColors.secondary,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            children: [
+              _buildDetailRow('Pickup Time', '2:00 PM - 4:00 PM'),
+              const Divider(),
+              _buildDetailRow('Address', '123 Main Street'),
+              const Divider(),
+              _buildDetailRow('Items', '1 Plastic Bottle'),
+              const Divider(),
+              _buildDetailRow('Points Earned', '20 pts', isPoints: true),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value, {bool isPoints = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            color: AppColors.textLight,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: isPoints ? AppColors.accent : AppColors.text,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class PickupConfirmationScreen extends StatefulWidget {
+  const PickupConfirmationScreen({super.key});
+
+  @override
+  State<PickupConfirmationScreen> createState() =>
+      _PickupConfirmationScreenState();
+}
+
+class _PickupConfirmationScreenState extends State<PickupConfirmationScreen>
+    with TickerProviderStateMixin {
+  late AnimationController _confetti;
+
+  @override
+  void initState() {
+    super.initState();
+    _confetti = AnimationController(
+      duration: const Duration(seconds: 1),
+      vsync: this,
+    );
+    _confetti.forward();
+  }
+
+  @override
+  void dispose() {
+    _confetti.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: Column(
+        children: [
+          const Spacer(),
+          Center(
+            child: Column(
+              children: [
+                // Success icon
+                ScaleTransition(
+                  scale: Tween<double>(begin: 0, end: 1)
+                      .animate(CurvedAnimation(parent: _confetti, curve: Curves.elasticOut)),
+                  child: Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF4CAF50).withOpacity(0.1),
+                    ),
+                    child: const Icon(
+                      Icons.check_circle,
+                      size: 70,
+                      color: Color(0xFF4CAF50),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Success message
+                const Text(
+                  'Your pickup request is\non the way!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.text,
+                    height: 1.4,
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                const Text(
+                  'A collector will pick up your items\nwithin the scheduled time.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textLight,
+                    height: 1.6,
+                  ),
+                ),
+
+                const SizedBox(height: 32),
+
+                // Request details
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: AppColors.secondary,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Column(
+                    children: [
+                      _buildConfirmationRow('Request ID', '#REQ001'),
+                      const Divider(),
+                      _buildConfirmationRow('Status', 'Pending'),
+                      const Divider(),
+                      _buildConfirmationRow('Points', '+20', isPoints: true),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Spacer(),
+
+          // Back Home Button
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.popUntil(context, (route) => route.isFirst);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4CAF50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: const Text(
+                  'Back to Home',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildConfirmationRow(String label, String value, {bool isPoints = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            color: AppColors.textLight,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: isPoints ? AppColors.accent : AppColors.text,
+          ),
+        ),
+      ],
     );
   }
 }
