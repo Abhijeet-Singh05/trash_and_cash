@@ -254,7 +254,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(10),
                         child: const Text(
-                          'Admin Login',
+                          '',
                           style: TextStyle(
                             color: Colors.grey,
                             fontSize: 12,

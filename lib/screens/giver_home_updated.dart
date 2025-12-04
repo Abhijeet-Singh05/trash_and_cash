@@ -62,18 +62,18 @@ class _GiverHomeScreenState extends State<GiverHomeScreen> {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: AppColors.border),
             ),
-            child: Column(
+            child: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Your Points',
                   style: TextStyle(
                     fontSize: 16,
                     color: AppColors.textLight,
                   ),
                 ),
-                const SizedBox(height: 8),
-                const Text(
+                SizedBox(height: 8),
+                Text(
                   '2,450 pts',
                   style: TextStyle(
                     fontSize: 32,
@@ -81,12 +81,12 @@ class _GiverHomeScreenState extends State<GiverHomeScreen> {
                     color: AppColors.accent,
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 LinearProgressIndicator(
                   value: 0.65,
                   backgroundColor: AppColors.border,
                   valueColor:
-                      const AlwaysStoppedAnimation<Color>(AppColors.accent),
+                      AlwaysStoppedAnimation<Color>(AppColors.accent),
                   minHeight: 8,
                 ),
               ],

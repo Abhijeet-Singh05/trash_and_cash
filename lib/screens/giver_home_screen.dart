@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 import 'ai_scanner_screen.dart';
 import 'leaderboard_screen.dart';
 import '../theme/app_colors.dart';
@@ -58,7 +59,15 @@ class _GiverHomeScreenState extends State<GiverHomeScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _buildGrowingTree(100),
+          SizedBox(
+            width: 200,
+            height: 200,
+            child: Lottie.asset(
+              'assets/animations/tree_grow.json',
+              fit: BoxFit.contain,
+              repeat: true,
+            ),
+          ),
           const SizedBox(height: 20),
           const Text(
             'Growing your eco impact...',
@@ -75,7 +84,7 @@ class _GiverHomeScreenState extends State<GiverHomeScreen> {
       children: [
         _buildHomePage(),
         _buildScanPage(),
-        LeaderboardScreen(),
+        const LeaderboardScreen(),
         _buildProfilePage(),
       ],
     );
@@ -89,6 +98,11 @@ class _GiverHomeScreenState extends State<GiverHomeScreen> {
         children: [
           // Welcome Container
           _buildWelcomeContainer(),
+          
+          const SizedBox(height: 20),
+          
+          // Missions Container
+          _buildMissionsContainer(),
           
           const SizedBox(height: 20),
           
@@ -201,6 +215,233 @@ class _GiverHomeScreenState extends State<GiverHomeScreen> {
     );
   }
 
+  Widget _buildMissionsContainer() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.secondary,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Your Missions',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppColors.text,
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          // Monthly Mission
+          _buildMissionCard(
+            title: 'Monthly Mission',
+            icon: Icons.calendar_month,
+            description: 'Recycle 5kg waste this month',
+            current: 3.2,
+            target: 5.0,
+            unit: 'kg',
+            color: const Color(0xFF2E7D32),
+          ),
+          const SizedBox(height: 12),
+          
+          // Weekly Mission
+          _buildMissionCard(
+            title: 'Weekly Mission',
+            icon: Icons.date_range,
+            description: 'Collect 2kg waste this week',
+            current: 1.1,
+            target: 2.0,
+            unit: 'kg',
+            color: const Color(0xFF1565C0),
+          ),
+          const SizedBox(height: 12),
+          
+          // Daily Mission Row
+          Row(
+            children: [
+              Expanded(
+                child: _buildDailyMissionCard(
+                  icon: Icons.delete_outline,
+                  title: 'Separate Waste',
+                  status: 'Completed',
+                  isCompleted: true,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildDailyMissionCard(
+                  icon: Icons.local_shipping,
+                  title: 'Request Pickup',
+                  status: 'Pending',
+                  isCompleted: false,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMissionCard({
+    required String title,
+    required IconData icon,
+    required String description,
+    required double current,
+    required double target,
+    required String unit,
+    required Color color,
+  }) {
+    double progress = (current / target).clamp(0.0, 1.0);
+    
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border.withOpacity(0.5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: color, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.text,
+                      ),
+                    ),
+                    Text(
+                      description,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textLight,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          
+          // Progress Bar
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: progress,
+              backgroundColor: AppColors.border.withOpacity(0.3),
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+              minHeight: 8,
+            ),
+          ),
+          const SizedBox(height: 8),
+          
+          // Progress Text
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '$current / $target $unit',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.text,
+                ),
+              ),
+              Text(
+                '${(progress * 100).toStringAsFixed(0)}%',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDailyMissionCard({
+    required IconData icon,
+    required String title,
+    required String status,
+    required bool isCompleted,
+  }) {
+    Color statusColor = isCompleted ? AppColors.success : AppColors.warning;
+    
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border.withOpacity(0.5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: statusColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: statusColor, size: 24),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: AppColors.text,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: statusColor.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              status,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: statusColor,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildActiveRequestsContainer() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -235,6 +476,8 @@ class _GiverHomeScreenState extends State<GiverHomeScreen> {
   }
 
   Widget _buildRequestDetailCard(String item, String pickupDate, String weight, int points) {
+    IconData itemIcon = _getItemIcon(item);
+    
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -249,23 +492,38 @@ class _GiverHomeScreenState extends State<GiverHomeScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
-                    Text(
-                      item,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: AppColors.text,
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.accent.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
                       ),
+                      child: Icon(itemIcon, color: AppColors.accent, size: 18),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      pickupDate,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textLight,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: AppColors.text,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            pickupDate,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textLight,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -313,7 +571,7 @@ class _GiverHomeScreenState extends State<GiverHomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Recent History',
+            'Recent Activity',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -331,6 +589,8 @@ class _GiverHomeScreenState extends State<GiverHomeScreen> {
   }
 
   Widget _buildHistoryItem(String item, String date, String weight, String points) {
+    IconData itemIcon = _getItemIcon(item);
+    
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Container(
@@ -341,27 +601,37 @@ class _GiverHomeScreenState extends State<GiverHomeScreen> {
           border: Border.all(color: AppColors.border),
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                    color: AppColors.text,
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.success.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(itemIcon, color: AppColors.success, size: 18),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: AppColors.text,
+                    ),
                   ),
-                ),
-                Text(
-                  '$date • $weight',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textLight,
+                  Text(
+                    '$date • $weight',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textLight,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -382,6 +652,16 @@ class _GiverHomeScreenState extends State<GiverHomeScreen> {
         ),
       ),
     );
+  }
+
+  IconData _getItemIcon(String itemName) {
+    final lowerItem = itemName.toLowerCase();
+    if (lowerItem.contains('plastic')) return Icons.shopping_bag;
+    if (lowerItem.contains('glass') || lowerItem.contains('bottle')) return Icons.local_drink;
+    if (lowerItem.contains('aluminum') || lowerItem.contains('can')) return Icons.recycling;
+    if (lowerItem.contains('paper')) return Icons.description;
+    if (lowerItem.contains('metal')) return Icons.hardware;
+    return Icons.delete_outline;
   }
 
   Widget _buildEcoPointsRedemptionContainer() {
@@ -417,21 +697,21 @@ class _GiverHomeScreenState extends State<GiverHomeScreen> {
               ),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Row(
+            child: const Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Total Points Available',
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.white70,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    const Text(
+                    SizedBox(height: 4),
+                    Text(
                       '2,450',
                       style: TextStyle(
                         fontSize: 24,
@@ -444,15 +724,15 @@ class _GiverHomeScreenState extends State<GiverHomeScreen> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    const Text(
+                    Text(
                       'Used This Month',
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.white70,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    const Text(
+                    SizedBox(height: 4),
+                    Text(
                       '350',
                       style: TextStyle(
                         fontSize: 24,
@@ -571,7 +851,15 @@ class _GiverHomeScreenState extends State<GiverHomeScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _buildGrowingTree(120),
+            SizedBox(
+              width: 160,
+              height: 160,
+              child: Lottie.asset(
+                'assets/animations/tree_grow.json',
+                fit: BoxFit.contain,
+                repeat: false,
+              ),
+            ),
             const SizedBox(height: 20),
             const Text(
               'Tap to Scan Trash',
@@ -643,6 +931,24 @@ class _GiverHomeScreenState extends State<GiverHomeScreen> {
           
           const SizedBox(height: 30),
           
+          // User Information Section
+          const Text(
+            'Personal Information',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppColors.text,
+            ),
+          ),
+          const SizedBox(height: 12),
+          
+          _buildUserInfoItem('Full Name', 'John Doe', Icons.person),
+          _buildUserInfoItem('Mobile Number', '+1 (555) 123-4567', Icons.phone),
+          _buildUserInfoItem('Email Address', 'john.doe@email.com', Icons.email),
+          _buildUserInfoItem('Address', '123 Eco Street, Green City, GC 12345', Icons.location_on),
+          
+          const SizedBox(height: 30),
+          
           // Stats Section
           const Text(
             'Your Statistics',
@@ -657,7 +963,37 @@ class _GiverHomeScreenState extends State<GiverHomeScreen> {
           _buildProfileStatItem('Total Waste Recycled', '45.3 kg'),
           _buildProfileStatItem('Total Eco Points', '2,450'),
           _buildProfileStatItem('Leaderboard Rank', '#12'),
+          _buildProfileStatItem('Current League', 'Gold League 🏆'),
           _buildProfileStatItem('Member Since', 'Jan 15, 2025'),
+          
+          const SizedBox(height: 30),
+          
+          // Grievance Section
+          const Text(
+            'Report Issues',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppColors.text,
+            ),
+          ),
+          const SizedBox(height: 12),
+          
+          _buildSettingItem('Pickup Issue', Icons.local_shipping, () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Pickup Issue Report Form Opened')),
+            );
+          }),
+          _buildSettingItem('Eco Points Issue', Icons.trending_up, () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Eco Points Issue Report Form Opened')),
+            );
+          }),
+          _buildSettingItem('Application Issue', Icons.bug_report, () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Application Issue Report Form Opened')),
+            );
+          }),
           
           const SizedBox(height: 30),
           
@@ -672,10 +1008,26 @@ class _GiverHomeScreenState extends State<GiverHomeScreen> {
           ),
           const SizedBox(height: 12),
           
-          _buildSettingItem('Notifications', Icons.notifications),
-          _buildSettingItem('Privacy & Security', Icons.lock),
-          _buildSettingItem('Help & Support', Icons.help),
-          _buildSettingItem('About', Icons.info),
+          _buildSettingItem('Notifications', Icons.notifications, () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Notification Settings Opened')),
+            );
+          }),
+          _buildSettingItem('Privacy & Security', Icons.lock, () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Privacy & Security Settings Opened')),
+            );
+          }),
+          _buildSettingItem('Help & Support', Icons.help, () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Help & Support Page Opened')),
+            );
+          }),
+          _buildSettingItem('About', Icons.info, () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('About Page Opened')),
+            );
+          }),
           
           const SizedBox(height: 20),
           
@@ -684,13 +1036,84 @@ class _GiverHomeScreenState extends State<GiverHomeScreen> {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () {
-                Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: const Text('Logout'),
+                      content: const Text('Are you sure you want to logout?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+                          },
+                          child: const Text('Logout', style: TextStyle(color: Colors.red)),
+                        ),
+                      ],
+                    );
+                  },
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red.withOpacity(0.1),
                 foregroundColor: Colors.red,
+                padding: const EdgeInsets.symmetric(vertical: 12),
               ),
-              child: const Text('Logout'),
+              child: const Text('Logout', style: TextStyle(fontSize: 16)),
+            ),
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUserInfoItem(String label, String value, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.accent.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: AppColors.accent, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textLight,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.text,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -730,72 +1153,37 @@ class _GiverHomeScreenState extends State<GiverHomeScreen> {
     );
   }
 
-  Widget _buildSettingItem(String label, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: AppColors.accent),
-              const SizedBox(width: 12),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: AppColors.text,
-                ),
-              ),
-            ],
-          ),
-          const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.textLight),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGrowingTree(double size) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: const Duration(seconds: 2),
-      builder: (context, value, child) {
-        return Column(
-          mainAxisSize: MainAxisSize.min,
+  Widget _buildSettingItem(String label, IconData icon, VoidCallback onPressed) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        margin: const EdgeInsets.only(bottom: 8),
+        decoration: BoxDecoration(
+          color: AppColors.primary,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Tree crown
-            Transform.scale(
-              scale: value,
-              child: Container(
-                width: size * 0.6,
-                height: size * 0.6,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.green.withOpacity(0.7),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.green.withOpacity(0.3),
-                      blurRadius: 10,
-                    ),
-                  ],
+            Row(
+              children: [
+                Icon(icon, color: AppColors.accent),
+                const SizedBox(width: 12),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: AppColors.text,
+                  ),
                 ),
-              ),
+              ],
             ),
-            // Tree trunk
-            Container(
-              width: size * 0.2,
-              height: size * 0.3,
-              color: Colors.brown.withOpacity(0.8),
-            ),
+            const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.textLight),
           ],
-        );
-      },
+        ),
+      ),
     );
   }
 }

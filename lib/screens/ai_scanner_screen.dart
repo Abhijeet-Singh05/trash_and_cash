@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import '../theme/app_colors.dart';
+import 'giver_home_screen.dart';
 
 class AIScannerScreen extends StatefulWidget {
   const AIScannerScreen({super.key});
@@ -344,7 +345,7 @@ class _AIScannerScreenState extends State<AIScannerScreen>
         child: Container(
           width: markerSize,
           height: markerSize,
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             border: Border(
               top: BorderSide(color: markerColor, width: 3),
               left: BorderSide(color: markerColor, width: 3),
@@ -359,7 +360,7 @@ class _AIScannerScreenState extends State<AIScannerScreen>
         child: Container(
           width: markerSize,
           height: markerSize,
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             border: Border(
               top: BorderSide(color: markerColor, width: 3),
               right: BorderSide(color: markerColor, width: 3),
@@ -374,7 +375,7 @@ class _AIScannerScreenState extends State<AIScannerScreen>
         child: Container(
           width: markerSize,
           height: markerSize,
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             border: Border(
               bottom: BorderSide(color: markerColor, width: 3),
               left: BorderSide(color: markerColor, width: 3),
@@ -389,7 +390,7 @@ class _AIScannerScreenState extends State<AIScannerScreen>
         child: Container(
           width: markerSize,
           height: markerSize,
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             border: Border(
               bottom: BorderSide(color: markerColor, width: 3),
               right: BorderSide(color: markerColor, width: 3),
@@ -477,7 +478,7 @@ class ClassificationResultScreen extends StatelessWidget {
         'name': 'Plastic Bottle',
         'icon': Icons.water_drop,
         'badge': 'Recyclable',
-        'badgeColor': const Color(0xFFFF9800),
+        'badgeColor': const Color(0xFF8BC34A),
         'points': 20,
       },
       {
@@ -490,8 +491,8 @@ class ClassificationResultScreen extends StatelessWidget {
       {
         'name': 'Food Waste',
         'icon': Icons.lunch_dining,
-        'badge': 'Not Recyclable',
-        'badgeColor': const Color(0xFFF44336),
+        'badge': 'Compostable',
+        'badgeColor': const Color(0xFFFFA726),
         'points': 0,
       },
     ];
@@ -507,10 +508,11 @@ class ClassificationResultScreen extends StatelessWidget {
         ),
         centerTitle: true,
         title: const Text(
-          'Detection Result',
+          'Detected Items',
           style: TextStyle(
             color: AppColors.text,
             fontWeight: FontWeight.bold,
+            fontSize: 18,
           ),
         ),
       ),
@@ -519,65 +521,65 @@ class ClassificationResultScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
 
             // Image Preview
             Center(
               child: Container(
-                width: 200,
-                height: 200,
+                width: 180,
+                height: 180,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: AppColors.primary,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: const Color(0xFF4CAF50).withOpacity(0.3),
+                    color: const Color(0xFF4CAF50).withOpacity(0.2),
                     width: 2,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF4CAF50).withOpacity(0.15),
-                      blurRadius: 12,
-                      spreadRadius: 4,
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 8,
+                      spreadRadius: 2,
                     ),
                   ],
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.image,
-                  size: 80,
-                  color: Colors.grey,
+                  size: 70,
+                  color: Colors.grey[400],
                 ),
               ),
             ),
 
-            const SizedBox(height: 32),
+            const SizedBox(height: 28),
 
             // Detected Items Title
             const Text(
-              'Detected Items',
+              'Items Found',
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: AppColors.text,
               ),
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
 
             // Items List
             ...items.map((item) {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: AppColors.secondary,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppColors.border),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border.withOpacity(0.5)),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
+                        color: Colors.black.withOpacity(0.03),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
                       ),
                     ],
                   ),
@@ -585,66 +587,66 @@ class ClassificationResultScreen extends StatelessWidget {
                     children: [
                       // Icon
                       Container(
-                        width: 48,
-                        height: 48,
+                        width: 44,
+                        height: 44,
                         decoration: BoxDecoration(
                           color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                         child: Icon(
                           item['icon'] as IconData,
-                          color: AppColors.accent,
-                          size: 24,
+                          color: const Color(0xFF4CAF50),
+                          size: 22,
                         ),
                       ),
 
-                      const SizedBox(width: 16),
+                      const SizedBox(width: 12),
 
-                      // Name
+                      // Name & Badge
                       Expanded(
-                        child: Text(
-                          item['name'] as String,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.text,
-                          ),
-                        ),
-                      ),
-
-                      // Badge & Points
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: (item['badgeColor'] as Color)
-                                  .withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              item['badge'] as String,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: item['badgeColor'] as Color,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item['name'] as String,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.text,
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            '+${item['points']} pts',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.accent,
+                            const SizedBox(height: 2),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: (item['badgeColor'] as Color)
+                                    .withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                item['badge'] as String,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: item['badgeColor'] as Color,
+                                ),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
+                      ),
+
+                      // Points
+                      Text(
+                        '+${item['points']} pts',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.accent,
+                        ),
                       ),
                     ],
                   ),
@@ -652,40 +654,43 @@ class ClassificationResultScreen extends StatelessWidget {
               );
             }).toList(),
 
-            const SizedBox(height: 32),
+            const SizedBox(height: 28),
 
             // Request Pickup Button
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const PickupRequestFlow(),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const PickupRequestFlow(),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF4CAF50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4CAF50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    elevation: 2,
                   ),
-                  elevation: 4,
-                ),
-                child: const Text(
-                  'Request Pickup',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                  child: const Text(
+                    'Request Pickup',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 8),
           ],
         ),
       ),
@@ -729,10 +734,11 @@ class _PickupRequestFlowState extends State<PickupRequestFlow> {
         ),
         centerTitle: true,
         title: Text(
-          'Pickup Request - Step ${_currentStep + 1}',
+          'Step ${_currentStep + 1} of 3',
           style: const TextStyle(
             color: AppColors.text,
             fontWeight: FontWeight.bold,
+            fontSize: 16,
           ),
         ),
       ),
@@ -746,12 +752,12 @@ class _PickupRequestFlowState extends State<PickupRequestFlow> {
                 3,
                 (index) => Expanded(
                   child: Container(
-                    height: 4,
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    height: 3,
+                    margin: const EdgeInsets.symmetric(horizontal: 3),
                     decoration: BoxDecoration(
                       color: index <= _currentStep
                           ? const Color(0xFF4CAF50)
-                          : AppColors.border,
+                          : AppColors.border.withOpacity(0.3),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -782,9 +788,9 @@ class _PickupRequestFlowState extends State<PickupRequestFlow> {
                         });
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.border,
+                        backgroundColor: AppColors.border.withOpacity(0.3),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                       ),
                       child: const Text(
@@ -792,6 +798,7 @@ class _PickupRequestFlowState extends State<PickupRequestFlow> {
                         style: TextStyle(
                           color: AppColors.text,
                           fontWeight: FontWeight.w600,
+                          fontSize: 14,
                         ),
                       ),
                     ),
@@ -817,7 +824,7 @@ class _PickupRequestFlowState extends State<PickupRequestFlow> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF4CAF50),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                     ),
                     child: Text(
@@ -825,6 +832,7 @@ class _PickupRequestFlowState extends State<PickupRequestFlow> {
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
+                        fontSize: 14,
                       ),
                     ),
                   ),
@@ -875,35 +883,58 @@ class _PickupRequestFlowState extends State<PickupRequestFlow> {
 
         // Item Details Card
         Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: AppColors.secondary,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.border),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.border.withOpacity(0.5)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildDetailRow('Item Name', 'Plastic Bottle'),
-              const Divider(),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Divider(
+                  height: 1,
+                  color: AppColors.border.withOpacity(0.3),
+                ),
+              ),
               _buildDetailRow('Estimated Points', '20 pts', isPoints: true),
-              const Divider(),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Divider(
+                  height: 1,
+                  color: AppColors.border.withOpacity(0.3),
+                ),
+              ),
               const Text(
                 'Weight (kg)',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 13,
                   color: AppColors.textLight,
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               TextField(
                 controller: _weightController,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
-                  hintText: 'Enter weight in kg',
+                  hintText: 'Enter weight',
+                  filled: true,
+                  fillColor: AppColors.primary.withOpacity(0.3),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: AppColors.border.withOpacity(0.3),
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: AppColors.border.withOpacity(0.2),
+                    ),
                   ),
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 12,
@@ -923,15 +954,15 @@ class _PickupRequestFlowState extends State<PickupRequestFlow> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Pickup within 2 hours',
+          'Available Pickup Times',
           style: TextStyle(
-            fontSize: 16,
+            fontSize: 15,
             fontWeight: FontWeight.bold,
             color: AppColors.text,
           ),
         ),
 
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
 
         // Time slots
         ...['2:00 PM - 4:00 PM', '4:00 PM - 6:00 PM', '6:00 PM - 8:00 PM']
@@ -942,8 +973,10 @@ class _PickupRequestFlowState extends State<PickupRequestFlow> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: AppColors.secondary,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.border),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: AppColors.border.withOpacity(0.4),
+                ),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -951,9 +984,9 @@ class _PickupRequestFlowState extends State<PickupRequestFlow> {
                   Row(
                     children: [
                       const Icon(
-                        Icons.access_time,
-                        color: const Color(0xFF4CAF50),
-                        size: 20,
+                        Icons.schedule,
+                        color: Color(0xFF4CAF50),
+                        size: 18,
                       ),
                       const SizedBox(width: 12),
                       Text(
@@ -989,37 +1022,55 @@ class _PickupRequestFlowState extends State<PickupRequestFlow> {
         Center(
           child: Container(
             width: 200,
-            height: 150,
+            height: 140,
             decoration: BoxDecoration(
-              color: const Color(0xFF4CAF50).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(16),
+              color: const Color(0xFF4CAF50).withOpacity(0.08),
+              borderRadius: BorderRadius.circular(14),
             ),
             child: const Icon(
               Icons.local_shipping,
-              size: 80,
+              size: 70,
               color: Color(0xFF4CAF50),
             ),
           ),
         ),
 
-        const SizedBox(height: 32),
+        const SizedBox(height: 28),
 
         // Details
         Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: AppColors.secondary,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.border),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.border.withOpacity(0.5)),
           ),
           child: Column(
             children: [
               _buildDetailRow('Pickup Time', '2:00 PM - 4:00 PM'),
-              const Divider(),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Divider(
+                  height: 1,
+                  color: AppColors.border.withOpacity(0.3),
+                ),
+              ),
               _buildDetailRow('Address', '123 Main Street'),
-              const Divider(),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Divider(
+                  height: 1,
+                  color: AppColors.border.withOpacity(0.3),
+                ),
+              ),
               _buildDetailRow('Items', '1 Plastic Bottle'),
-              const Divider(),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Divider(
+                  height: 1,
+                  color: AppColors.border.withOpacity(0.3),
+                ),
+              ),
               _buildDetailRow('Points Earned', '20 pts', isPoints: true),
             ],
           ),
@@ -1035,15 +1086,15 @@ class _PickupRequestFlowState extends State<PickupRequestFlow> {
         Text(
           label,
           style: const TextStyle(
-            fontSize: 14,
+            fontSize: 13,
             color: AppColors.textLight,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w400,
           ),
         ),
         Text(
           value,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 13,
             fontWeight: FontWeight.bold,
             color: isPoints ? AppColors.accent : AppColors.text,
           ),
@@ -1096,64 +1147,76 @@ class _PickupConfirmationScreenState extends State<PickupConfirmationScreen>
                   scale: Tween<double>(begin: 0, end: 1)
                       .animate(CurvedAnimation(parent: _confetti, curve: Curves.elasticOut)),
                   child: Container(
-                    width: 120,
-                    height: 120,
+                    width: 110,
+                    height: 110,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: const Color(0xFF4CAF50).withOpacity(0.1),
+                      color: const Color(0xFF4CAF50).withOpacity(0.12),
                     ),
                     child: const Icon(
                       Icons.check_circle,
-                      size: 70,
+                      size: 60,
                       color: Color(0xFF4CAF50),
                     ),
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 22),
 
                 // Success message
                 const Text(
-                  'Your pickup request is\non the way!',
+                  'Pickup Confirmed!',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 24,
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
                     color: AppColors.text,
-                    height: 1.4,
+                    height: 1.3,
                   ),
                 ),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
 
                 const Text(
-                  'A collector will pick up your items\nwithin the scheduled time.',
+                  'A collector will arrive at your location within the selected time window.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 13,
                     color: AppColors.textLight,
-                    height: 1.6,
+                    height: 1.5,
                   ),
                 ),
 
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
 
                 // Request details
                 Container(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(16),
                   margin: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
                     color: AppColors.secondary,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppColors.border),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border.withOpacity(0.5)),
                   ),
                   child: Column(
                     children: [
                       _buildConfirmationRow('Request ID', '#REQ001'),
-                      const Divider(),
-                      _buildConfirmationRow('Status', 'Pending'),
-                      const Divider(),
-                      _buildConfirmationRow('Points', '+20', isPoints: true),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        child: Divider(
+                          height: 1,
+                          color: AppColors.border.withOpacity(0.3),
+                        ),
+                      ),
+                      _buildConfirmationRow('Status', 'Confirmed'),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        child: Divider(
+                          height: 1,
+                          color: AppColors.border.withOpacity(0.3),
+                        ),
+                      ),
+                      _buildConfirmationRow('Points Earned', '+20', isPoints: true),
                     ],
                   ),
                 ),
@@ -1167,21 +1230,24 @@ class _PickupConfirmationScreenState extends State<PickupConfirmationScreen>
             padding: const EdgeInsets.all(16),
             child: SizedBox(
               width: double.infinity,
-              height: 56,
+              height: 54,
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.popUntil(context, (route) => route.isFirst);
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (context) => const GiverHomeScreen()),
+                    (route) => false,
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4CAF50),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
                 child: const Text(
                   'Back to Home',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: Colors.white,
                   ),
@@ -1201,15 +1267,15 @@ class _PickupConfirmationScreenState extends State<PickupConfirmationScreen>
         Text(
           label,
           style: const TextStyle(
-            fontSize: 14,
+            fontSize: 12,
             color: AppColors.textLight,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w400,
           ),
         ),
         Text(
           value,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 12,
             fontWeight: FontWeight.bold,
             color: isPoints ? AppColors.accent : AppColors.text,
           ),

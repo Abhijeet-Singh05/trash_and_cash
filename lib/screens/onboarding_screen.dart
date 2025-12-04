@@ -13,23 +13,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   int _currentPage = 0;
 
   final List<OnboardingPage> _pages = [
-    OnboardingPage(
+    const OnboardingPage(
       title: 'Trash is a problem we all face.',
       subtitle: 'A small step from you brings a big change.',
-      illustration: const PollutedCityIllustration(),
-      backgroundColor: const Color(0xFFE3F2FD),
+      illustration: PollutedCityIllustration(),
+      backgroundColor: Color(0xFFE3F2FD),
     ),
-    OnboardingPage(
+    const OnboardingPage(
       title: 'Your trash can create value.',
       subtitle: 'Turn everyday waste into points, rewards and impact.',
-      illustration: const HandoverIllustration(),
-      backgroundColor: const Color(0xFFE8F5E9),
+      illustration: HandoverIllustration(),
+      backgroundColor: Color(0xFFE8F5E9),
     ),
-    OnboardingPage(
+    const OnboardingPage(
       title: 'Let\'s make the planet cleaner together.',
       subtitle: 'We\'re here to help you recycle smarter.',
-      illustration: const PlantingIllustration(),
-      backgroundColor: const Color(0xFFEFF7FA),
+      illustration: PlantingIllustration(),
+      backgroundColor: Color(0xFFEFF7FA),
     ),
   ];
 
@@ -138,7 +138,7 @@ class OnboardingPage extends StatelessWidget {
   final Widget illustration;
   final Color backgroundColor;
 
-  const OnboardingPage({
+  const OnboardingPage({super.key, 
     required this.title,
     required this.subtitle,
     required this.illustration,
@@ -195,7 +195,7 @@ class OnboardingPage extends StatelessWidget {
 
 // Illustration Widgets
 class PollutedCityIllustration extends StatelessWidget {
-  const PollutedCityIllustration();
+  const PollutedCityIllustration({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -273,7 +273,7 @@ class PollutedCityIllustration extends StatelessWidget {
 }
 
 class HandoverIllustration extends StatelessWidget {
-  const HandoverIllustration();
+  const HandoverIllustration({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -340,7 +340,7 @@ class HandoverIllustration extends StatelessWidget {
 }
 
 class PlantingIllustration extends StatelessWidget {
-  const PlantingIllustration();
+  const PlantingIllustration({super.key});
 
   @override
   Widget build(BuildContext context) {

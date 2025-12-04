@@ -204,7 +204,7 @@ class TreeAnimationPainter extends CustomPainter {
     if (progress == 0) return;
 
     final trunkHeight = size * 0.12;
-    final leafCount = 5;
+    const leafCount = 5;
 
     for (int i = 0; i < leafCount; i++) {
       final angle = (i * 360 / leafCount) + (progress * 15);
@@ -340,7 +340,7 @@ class TreeAnimationPainter extends CustomPainter {
   ) {
     if (progress < 0.1) return;
 
-    final particleCount = 12;
+    const particleCount = 12;
     final particlePaint = Paint()
       ..style = PaintingStyle.fill;
 

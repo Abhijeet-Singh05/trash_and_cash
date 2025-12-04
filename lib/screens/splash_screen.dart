@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'dart:math' as Math;
+import 'dart:math' as math;
 import 'onboarding_screen.dart';
-import '../widgets/tree_growing_animation.dart';
+import 'package:lottie/lottie.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -10,10 +10,12 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen>
+    with TickerProviderStateMixin {
   late AnimationController _treeController;
-  late AnimationController _particleController;
-  late AnimationController _textController;
+  late AnimationController _ringController;
+  late AnimationController _textFade;
+
   int _quoteIndex = 0;
 
   final List<String> _quotes = [
@@ -25,42 +27,44 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   @override
   void initState() {
     super.initState();
-    
+
+    // Tree animation (plays once — not looping)
     _treeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2200),
+    )..forward();
+
+    // Smooth progress ring animation
+    _ringController = AnimationController(
+      vsync: this,
       duration: const Duration(seconds: 3),
+    )..forward();
+
+    // Text fade animation
+    _textFade = AnimationController(
       vsync: this,
-    );
+      duration: const Duration(milliseconds: 400),
+    )..forward();
 
-    _particleController = AnimationController(
-      duration: const Duration(seconds: 2),
-      vsync: this,
-    )..repeat();
-
-    _textController = AnimationController(
-      duration: const Duration(milliseconds: 500),
-      vsync: this,
-    );
-
-    _treeController.forward();
-    _textController.forward();
-
-    // Rotate quotes every 2.5 seconds
+    // Quote rotation (lightweight)
     Future.doWhile(() async {
-      await Future.delayed(const Duration(milliseconds: 2500));
-      if (mounted) {
-        setState(() {
-          _quoteIndex = (_quoteIndex + 1) % _quotes.length;
-        });
-        _textController.forward(from: 0.0);
-      }
-      return mounted;
+      await Future.delayed(const Duration(milliseconds: 2400));
+      if (!mounted) return false;
+
+      setState(() {
+        _quoteIndex = (_quoteIndex + 1) % _quotes.length;
+      });
+
+      _textFade.forward(from: 0);
+      return true;
     });
 
-    // Navigate after 5 seconds
+    // Navigate forward
     Future.delayed(const Duration(seconds: 5), () {
       if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const OnboardingScreen()),
         );
       }
     });
@@ -69,8 +73,8 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   @override
   void dispose() {
     _treeController.dispose();
-    _particleController.dispose();
-    _textController.dispose();
+    _ringController.dispose();
+    _textFade.dispose();
     super.dispose();
   }
 
@@ -80,49 +84,48 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       backgroundColor: const Color(0xFFE7F0FF),
       body: Stack(
         children: [
-          // Background with leaf illustrations
+          // LIGHTER, more premium leaf background
           Positioned.fill(
-            child: Opacity(
-              opacity: 0.02,
-              child: CustomPaint(
-                painter: LeafPatternPainter(),
-              ),
+            child: CustomPaint(
+              painter: SoftLeafBackground(),
             ),
           ),
 
-          // Main content
+          // MAIN CONTENT
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Tree animation
+                // Tree + ring
                 SizedBox(
-                  width: 150,
-                  height: 150,
+                  width: 180,
+                  height: 180,
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      // Circular progress ring
-                      SizedBox.expand(
-                        child: AnimatedBuilder(
-                          animation: _treeController,
-                          builder: (context, child) {
-                            return CustomPaint(
-                              painter: CircularProgressPainter(
-                                progress: _treeController.value,
-                              ),
-                            );
-                          },
-                        ),
+                      // Soft animated ring
+                      AnimatedBuilder(
+                        animation: _ringController,
+                        builder: (context, _) {
+                          return CustomPaint(
+                            size: const Size(180, 180),
+                            painter: SmoothRingPainter(
+                              progress: _ringController.value,
+                            ),
+                          );
+                        },
                       ),
 
-                      // Premium tree animation
-                      TreeGrowingAnimation(
-                        duration: const Duration(seconds: 3),
-                        size: 120,
-                        onComplete: () {
-                          // Animation complete
+                      // Tree Lottie (no looping → lightweight)
+                      Lottie.asset(
+                        "assets/animations/tree_grow.json",
+                        controller: _treeController,
+                        width: 130,
+                        height: 130,
+                        onLoaded: (comp) {
+                          _treeController.duration = comp.duration;
                         },
+                        fit: BoxFit.contain,
                       ),
                     ],
                   ),
@@ -130,50 +133,41 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
                 const SizedBox(height: 40),
 
-                // App title
+                // Title
                 const Text(
-                  'Trash & Cash',
+                  "Trash & Cash",
                   style: TextStyle(
                     fontSize: 28,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.8,
                     color: Color(0xFF2E7D32),
                   ),
                 ),
 
-                const SizedBox(height: 30),
+                const SizedBox(height: 40),
 
-                // Rotating quotes
-                SizedBox(
-                  height: 60,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      FadeTransition(
-                        opacity: _textController,
-                        child: Text(
-                          _quotes[_quoteIndex],
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF4A4A4A),
-                            height: 1.4,
-                          ),
-                        ),
-                      ),
-                    ],
+                // Clean fade quotes
+                FadeTransition(
+                  opacity: _textFade,
+                  child: Text(
+                    _quotes[_quoteIndex],
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF3A3A3A),
+                    ),
+                    textAlign: TextAlign.center,
                   ),
                 ),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
 
                 // Micro text
                 const Text(
-                  'Please wait while we prepare your experience.',
+                  "Preparing your experience...",
                   style: TextStyle(
                     fontSize: 12,
-                    color: Color(0xFF999999),
-                    fontWeight: FontWeight.w400,
+                    color: Color(0xFF8A8A8A),
                   ),
                 ),
               ],
@@ -185,76 +179,61 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   }
 }
 
-class CircularProgressPainter extends CustomPainter {
+//
+// ★★★★★ IMPROVED RING PAINTER
+//
+class SmoothRingPainter extends CustomPainter {
   final double progress;
 
-  CircularProgressPainter({required this.progress});
+  SmoothRingPainter({required this.progress});
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2;
+    final radius = size.width * 0.43;
 
-    // Draw droplet-shaped progress ring
-    final paint = Paint()
-      ..color = const Color(0xFF8BC34A)
-      ..strokeWidth = 3
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
+    final ringPaint = Paint()
+      ..color = const Color(0xFF7CB342)
+      ..strokeWidth = 4
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
 
-    // Draw arc
     canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius - 5),
-      -Math.pi / 2,
-      Math.pi * 2 * progress,
+      Rect.fromCircle(center: center, radius: radius),
+      -math.pi / 2,
+      progress * math.pi * 2,
       false,
-      paint,
+      ringPaint,
     );
-
-    // Draw droplets along the progress
-    final dropletCount = 12;
-    for (int i = 0; i < dropletCount; i++) {
-      final angle = -Math.pi / 2 + (Math.pi * 2 * progress * (i / dropletCount));
-      if (i / dropletCount <= progress) {
-        final dropletX = center.dx + (radius - 5) * Math.cos(angle);
-        final dropletY = center.dy + (radius - 5) * Math.sin(angle);
-
-        final dropletPaint = Paint()
-          ..color = const Color(0xFF8BC34A)
-          ..style = PaintingStyle.fill;
-
-        canvas.drawCircle(Offset(dropletX, dropletY), 3, dropletPaint);
-      }
-    }
   }
 
   @override
-  bool shouldRepaint(CircularProgressPainter oldDelegate) =>
+  bool shouldRepaint(covariant SmoothRingPainter oldDelegate) =>
       oldDelegate.progress != progress;
 }
 
-class LeafPatternPainter extends CustomPainter {
+//
+// ★★★★★ SOFTER BACKGROUND LEAFS
+//
+class SoftLeafBackground extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.green.withOpacity(0.05)
-      ..style = PaintingStyle.fill;
+    final leaf = Paint()..color = const Color(0xFF4CAF50).withOpacity(0.06);
 
-    // Draw simple leaf shapes in corners
-    _drawLeaf(canvas, Offset(20, 30), paint);
-    _drawLeaf(canvas, Offset(size.width - 40, size.height - 50), paint);
+    _drawLeaf(canvas, size, const Offset(30, 40), 40, leaf);
+    _drawLeaf(canvas, size, Offset(size.width - 60, size.height - 50), 45, leaf);
   }
 
-  void _drawLeaf(Canvas canvas, Offset offset, Paint paint) {
+  void _drawLeaf(Canvas canvas, Size size, Offset offset, double scale, Paint p) {
     final path = Path()
       ..moveTo(offset.dx, offset.dy)
-      ..quadraticBezierTo(offset.dx + 15, offset.dy - 10, offset.dx + 20, offset.dy)
-      ..quadraticBezierTo(offset.dx + 15, offset.dy + 10, offset.dx, offset.dy)
+      ..quadraticBezierTo(
+          offset.dx + scale, offset.dy - scale, offset.dx + (scale * 1.4), offset.dy)
+      ..quadraticBezierTo(offset.dx + scale, offset.dy + scale, offset.dx, offset.dy)
       ..close();
-
-    canvas.drawPath(path, paint);
+    canvas.drawPath(path, p);
   }
 
   @override
-  bool shouldRepaint(LeafPatternPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
